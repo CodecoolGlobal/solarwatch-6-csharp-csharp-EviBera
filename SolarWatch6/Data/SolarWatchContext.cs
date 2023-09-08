@@ -8,10 +8,19 @@ namespace SolarWatch6.Data
         public DbSet<City> Cities { get; set; }
         public DbSet<SunsetSunriseData> SunsetSunriseDataCollection { get; set; }
 
+        private readonly string? _connectionString;
+
+        public SolarWatchContext(DbContextOptions<SolarWatchContext> options, IConfiguration configuration) : base(options)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(
-                "Server=localhost,1433;Database=SolarWatch;User Id=sa;Password=yourStrong(!)Password;TrustServerCertificate=True;");
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer(_connectionString);
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

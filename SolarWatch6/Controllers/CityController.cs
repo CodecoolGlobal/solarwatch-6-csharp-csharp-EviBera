@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SolarWatch6.Models;
 using SolarWatch6.Services;
 using SolarWatch6.Services.Repository;
@@ -27,7 +28,7 @@ namespace SolarWatch6.Controllers
             _sunsetSunriseDataRepository = sunsetSunriseDataRepository;
         }
 
-        [HttpGet("GetAsync")]
+        [HttpGet("GetAsync"), Authorize]
         public async Task<ActionResult<CityWithSolarData>> GetAsync(string cityName, [Required] DateOnly day)
         {
             try

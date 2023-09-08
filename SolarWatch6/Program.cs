@@ -3,6 +3,9 @@ using SolarWatch6.Models;
 using SolarWatch6.Services;
 using SolarWatch6.Services.Repository;
 using SolarWatch6.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,28 @@ builder.Services.AddSingleton<IJsonProcessor, JsonProcessor>();
 builder.Services.AddScoped<ICityRepository, CityRepository>();
 builder.Services.AddScoped<ISolarDataRepository, SunsetSunriseDataRepository>();
 builder.Services.AddDbContext<SolarWatchContext>(ServiceLifetime.Transient);
+builder.Services.AddDbContext<UsersContext>();
+
+var configuration = builder.Configuration;
+var issuerSigningKey = configuration["JwtSettings:IssuerSigningKey"];
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtSettings = configuration.GetSection("JwtSettings");
+        options.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ClockSkew = TimeSpan.Zero,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["ValidIssuer"],
+            ValidAudience = jwtSettings["ValidAudience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey))
+        };
+    });
 
 var app = builder.Build();
 
@@ -29,20 +54,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-
-PrintCities();
-
-void PrintCities()
-{
-    using var db = new SolarWatchContext();
-    foreach (var city in db.Cities)
-    {
-        Console.WriteLine($"{city.Id}, {city.CityName}, {city.Lat}, {city.Lon}, {city.Country}");
-    }
-}
 
 app.Run();
