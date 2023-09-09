@@ -85,7 +85,7 @@ namespace SolarWatch6.Controllers
 
                 if (city != null)
                 {
-                    _cityRepository.AddAsync(city);
+                    await _cityRepository.AddAsync(city);
                 }
 
             }
@@ -105,7 +105,7 @@ namespace SolarWatch6.Controllers
                 {
                     solarData = _jsonProcessor.ProcessJsonSolarData(solarDataString, day);
                     solarData.CityId = city.Id;
-                    _sunsetSunriseDataRepository.AddSolarDataAsync(solarData);
+                    await _sunsetSunriseDataRepository.AddSolarDataAsync(solarData);
                 }
 
             }
