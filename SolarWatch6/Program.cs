@@ -12,86 +12,12 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+AddServices();
+ConfigureSwagger();
+AddDbContext();
+AddAuthentication();
+AddIdentity();
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen(option =>
-{
-    option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
-    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter a valid token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
-    });
-    option.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
-                }
-            },
-            new string[]{}
-        }
-    });
-}); 
-builder.Services.AddSingleton<ICityService, CityService>();
-builder.Services.AddSingleton<IJsonProcessor, JsonProcessor>();
-builder.Services.AddScoped<ICityRepository, CityRepository>();
-builder.Services.AddScoped<ISolarDataRepository, SunsetSunriseDataRepository>();
-builder.Services.AddDbContext<SolarWatchContext>(ServiceLifetime.Transient);
-builder.Services.AddDbContext<UsersContext>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-
-var configuration = builder.Configuration;
-var issuerSigningKey = configuration["JwtSettings:IssuerSigningKey"];
-
-builder.Services.AddSingleton<ITokenService>(provider =>
-{
-    //var issuerSigningKey = configuration["JwtSettings:IssuerSigningKey"];
-    return new TokenService(configuration);
-});
-
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        var jwtSettings = configuration.GetSection("JwtSettings");
-        options.TokenValidationParameters = new TokenValidationParameters()
-        {
-            ClockSkew = TimeSpan.Zero,
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["ValidIssuer"],
-            ValidAudience = jwtSettings["ValidAudience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey))
-        };
-    });
-
-builder.Services
-    .AddIdentityCore<IdentityUser>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.User.RequireUniqueEmail = true;
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireLowercase = false;
-    })
-    .AddEntityFrameworkStores<UsersContext>();
 
 var app = builder.Build();
 
@@ -110,3 +36,94 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+void AddServices()
+{
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSingleton<ICityService, CityService>();
+    builder.Services.AddSingleton<IJsonProcessor, JsonProcessor>();
+    builder.Services.AddScoped<ICityRepository, CityRepository>();
+    builder.Services.AddScoped<ISolarDataRepository, SunsetSunriseDataRepository>();
+}
+
+void ConfigureSwagger()
+{
+    builder.Services.AddSwaggerGen(option =>
+    {
+        option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
+        option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            In = ParameterLocation.Header,
+            Description = "Please enter a valid token",
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            BearerFormat = "JWT",
+            Scheme = "Bearer"
+        });
+        option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+    });
+}
+void AddDbContext()
+{
+    builder.Services.AddDbContext<SolarWatchContext>(ServiceLifetime.Scoped);
+    builder.Services.AddDbContext<UsersContext>();
+}
+
+void AddAuthentication()
+{
+    builder.Services.AddScoped<IAuthService, AuthService>();
+
+    var configuration = builder.Configuration;
+    var issuerSigningKey = configuration["JwtSettings:IssuerSigningKey"];
+
+    builder.Services.AddSingleton<ITokenService, TokenService>();
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            var jwtSettings = configuration.GetSection("JwtSettings");
+            options.TokenValidationParameters = new TokenValidationParameters()
+            {
+                ClockSkew = TimeSpan.Zero,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["ValidIssuer"],
+                ValidAudience = jwtSettings["ValidAudience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey))
+            };
+        });
+}
+
+void AddIdentity()
+{
+    builder.Services
+    .AddIdentityCore<IdentityUser>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+    })
+    .AddEntityFrameworkStores<UsersContext>();
+}
