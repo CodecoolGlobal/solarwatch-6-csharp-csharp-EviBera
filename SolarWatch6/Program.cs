@@ -6,6 +6,8 @@ using SolarWatch6.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
+using SolarWatch6.Services.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,7 @@ builder.Services.AddScoped<ICityRepository, CityRepository>();
 builder.Services.AddScoped<ISolarDataRepository, SunsetSunriseDataRepository>();
 builder.Services.AddDbContext<SolarWatchContext>(ServiceLifetime.Transient);
 builder.Services.AddDbContext<UsersContext>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var configuration = builder.Configuration;
 var issuerSigningKey = configuration["JwtSettings:IssuerSigningKey"];
@@ -42,6 +45,19 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey))
         };
     });
+
+builder.Services
+    .AddIdentityCore<IdentityUser>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+    })
+    .AddEntityFrameworkStores<UsersContext>();
 
 var app = builder.Build();
 
