@@ -34,5 +34,20 @@ namespace SolarWatch6.Services.Repository
                 .FirstOrDefaultAsync(ssd => ssd.CityId == cityId && ssd.Date == date.ToDateTime(TimeOnly.Parse("10:00 PM")));
             return solarData;
         }
+
+        public async Task<ICollection<SunsetSunriseData>> DeleteByCityIdAsync(int cityId)
+        {
+            var collectionOfDataToDelete = await _dbContext.SunsetSunriseDataCollection.Where(ssd => ssd.CityId == cityId)
+                .ToListAsync();
+
+            foreach(var item in collectionOfDataToDelete)
+            {
+                _dbContext.SunsetSunriseDataCollection.Remove(item);
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            return collectionOfDataToDelete;
+        }
     }
 }

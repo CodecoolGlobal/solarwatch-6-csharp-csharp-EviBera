@@ -74,6 +74,115 @@ namespace SolarWatch6.Controllers
             }
         }
 
+        [HttpPost("PostCityAsync")]
+        public async Task<ActionResult<City>> PostCityAsync(string cityName, double latitude, double longitude, string country,
+            string? state)
+        {
+            try
+            {
+                var city = new City()
+                {
+                    CityName = cityName,
+                    Lat = latitude,
+                    Lon = longitude,
+                    Country = country,
+                    State = state
+                };
+
+                var newCity = await _cityRepository.AddAsync(city);
+
+                if (newCity == null) 
+                {
+                    return BadRequest("Failed to add new city");
+                }
+
+                return Ok(newCity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error adding new city, {ex.Message}");
+                return NotFound($"Error adding new city, {ex.Message}");
+            }
+        }
+        
+        [HttpPost("PostSolarDataAsync")]
+        public async Task<ActionResult<SunsetSunriseData>> PostSolarDataAsync([Required] int cityId, DateTime date, DateTime sunset, 
+            DateTime sunrise)
+        {
+            try
+            {
+                var sunsetSunriseData = new SunsetSunriseData()
+                {
+                    Date = date,
+                    Sunset = sunset,
+                    Sunrise = sunrise,
+                    CityId = cityId
+                };
+
+                var newSunsetSunriseData = await _sunsetSunriseDataRepository.AddSolarDataAsync(sunsetSunriseData);
+
+                if (sunsetSunriseData == null)
+                {
+                    return BadRequest("Failed to add solar data");
+                }
+
+                return Ok(newSunsetSunriseData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error adding new solar data, {ex.Message}");
+                return NotFound($"Error adding new solar data, {ex.Message}");
+            }
+        }
+
+        [HttpPatch("UpdateCityAsync")]
+        public async Task<ActionResult<City>> UpdateCityAsync([Required] int cityId, [FromBody] CityUpdateDTO cityDto)
+        {
+            try
+            {
+                var updatedCity = await _cityRepository.UpdateAsync(cityId, cityDto);
+
+                if (updatedCity == null)
+                {
+                    return NotFound($"Failed to update city with id {cityId}");
+                }
+
+                return Ok(updatedCity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating city, {ex.Message}");
+                return BadRequest($"Error updating city, {ex.Message}");
+            }
+        }
+
+        //Patch SolarData
+
+        [HttpDelete("DeleteCityAsync")]
+        public async Task<ActionResult<City>> DeleteCityAndItsSolarDataAsync([Required] int cityId)
+        {
+            try
+            {
+                var cityToDelete = await _cityRepository.DeleteByIdAsync(cityId);
+
+                if (cityToDelete == null)
+                {
+                    return NotFound("Nonexistent city, failed to delete");
+                }
+
+                await _sunsetSunriseDataRepository.DeleteByCityIdAsync(cityId);
+
+                return Ok(cityToDelete);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting city, {ex.Message}");
+                return BadRequest($"Error deleting city, {ex.Message}");
+            }
+        }
+
+        //Delete SolarData
+
         private async Task<City> FindACityAsync(string cityName)
         {
             var city = await _cityRepository.GetByNameAsync(cityName);

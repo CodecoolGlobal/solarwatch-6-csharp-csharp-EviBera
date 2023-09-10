@@ -8,6 +8,9 @@ namespace SolarWatch6.Services.Repository
         Task<City?> GetByNameAsync(string name);
 
         Task<City> AddAsync(City city);
-        
+        Task<City> DeleteByIdAsync(int cityId);
+        Task<City> UpdateAsync(int id, CityUpdateDTO cityDto);
+
+
     }
 }
