@@ -29,7 +29,7 @@ namespace SolarWatch6.Controllers
         }
 
 
-        [HttpGet("GetCityWithSolarData"), Authorize]
+        [HttpGet("GetCityWithSolarData"), Authorize(Roles = "User, Admin")]
         public async Task<ActionResult<CityWithSolarData>> GetAsync(string cityName, [Required] DateOnly day)
         {
             try
@@ -76,7 +76,7 @@ namespace SolarWatch6.Controllers
         }
 
 
-        [HttpPost("PostCity")]
+        [HttpPost("PostCity"), Authorize(Roles = "Admin")]
         public async Task<ActionResult<City>> PostCityAsync(string cityName, double latitude, double longitude, string country,
             string? state)
         {
@@ -108,7 +108,7 @@ namespace SolarWatch6.Controllers
         }
         
 
-        [HttpPost("PostSolarData")]
+        [HttpPost("PostSolarData"), Authorize(Roles = "Admin")]
         public async Task<ActionResult<SunsetSunriseData>> PostSolarDataAsync([Required] int cityId, DateTime date, DateTime sunset, 
             DateTime sunrise)
         {
@@ -139,7 +139,7 @@ namespace SolarWatch6.Controllers
         }
 
 
-        [HttpPatch("UpdateCity")]
+        [HttpPatch("UpdateCity"), Authorize(Roles = "Admin")]
         public async Task<ActionResult<City>> UpdateCityAsync([Required] int cityId, [FromBody] CityUpdateDTO cityDto)
         {
             try
@@ -161,7 +161,7 @@ namespace SolarWatch6.Controllers
         }
         
 
-        [HttpPatch("UpdateSolarData")]
+        [HttpPatch("UpdateSolarData"), Authorize(Roles = "Admin")]
         public async Task<ActionResult<SunsetSunriseData>> UpdateSolarDataAsync([Required] int solarDataId, 
             [FromBody] SolarDataDTO newSunsetSunriseData)
         {
@@ -184,7 +184,7 @@ namespace SolarWatch6.Controllers
         }
 
 
-        [HttpDelete("DeleteCity")]
+        [HttpDelete("DeleteCity"), Authorize(Roles = "Admin")]
         public async Task<ActionResult<City>> DeleteCityAndItsSolarDataAsync([Required] int cityId)
         {
             try
@@ -208,7 +208,7 @@ namespace SolarWatch6.Controllers
         }
 
 
-        [HttpDelete("DeleteSolarData")]
+        [HttpDelete("DeleteSolarData"), Authorize(Roles = "Admin")]
         public async Task<ActionResult<SunsetSunriseData>> DeleteSolarDataAsync([Required] int solarDataId)
         {
             try

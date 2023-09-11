@@ -22,11 +22,11 @@ namespace SolarWatch6.Services.Authentication
             _validAudience = configuration["JwtSettings:ValidAudience"];
         }
 
-        public string CreateToken(IdentityUser user)
+        public string CreateToken(IdentityUser user, string role)
         {
             var expiration = DateTime.UtcNow.AddMinutes(ExpirationMinutes);
             var token = CreateJwtToken(
-                CreateClaims(user),
+                CreateClaims(user, role),
                 CreateSigningCredentials(),
                 expiration
             );
@@ -44,7 +44,7 @@ namespace SolarWatch6.Services.Authentication
             signingCredentials: credentials
         );
 
-        private List<Claim> CreateClaims(IdentityUser user)
+        private List<Claim> CreateClaims(IdentityUser user, string? role)
         {
             try
             {
@@ -57,6 +57,12 @@ namespace SolarWatch6.Services.Authentication
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email)
             };
+
+                if(role != null)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+
                 return claims;
             }
             catch (Exception e)

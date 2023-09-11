@@ -6,22 +6,27 @@ namespace SolarWatch6.Services.Authentication
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ITokenService _tokenService;
+        private readonly IConfiguration _configuration;
 
-        public AuthService(UserManager<IdentityUser> userManager, ITokenService tokenService)
+        public AuthService(UserManager<IdentityUser> userManager, ITokenService tokenService, IConfiguration configuration)
         {
             _userManager = userManager;
             _tokenService = tokenService;
+            _configuration = configuration;
         }
 
-        public async Task<AuthResult> RegisterAsync(string email, string username, string password)
+        public async Task<AuthResult> RegisterAsync(string email, string username, string password, string role)
         {
-            var result = await _userManager.CreateAsync(
-            new IdentityUser { UserName = username, Email = email }, password);
+            var user = new IdentityUser { UserName = username, Email = email };
+            var result = await _userManager.CreateAsync(user, password);
+            
 
             if (!result.Succeeded)
             {
                 return FailedRegistration(result, email, username);
             }
+
+            await _userManager.AddToRoleAsync(user, role);
 
             return new AuthResult(true, email, username, "");
         }
@@ -53,7 +58,18 @@ namespace SolarWatch6.Services.Authentication
                 return InvalidPassword(email, managedUser.UserName);
             }
 
-            var accessToken = _tokenService.CreateToken(managedUser);
+            var roles = await _userManager.GetRolesAsync(managedUser);
+            string? accessToken = default;
+
+            if(roles.Count >= 1)
+            {
+                accessToken = _tokenService.CreateToken(managedUser, roles[0]);
+            }
+            else
+            {
+                var userRoleName = _configuration.GetSection("AppSettings")["UserRole"];
+                accessToken = _tokenService.CreateToken(managedUser, userRoleName);
+            }
 
             return new AuthResult(true, managedUser.Email, managedUser.UserName, accessToken);
         }

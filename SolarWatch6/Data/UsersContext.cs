@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace SolarWatch6.Data
 {
-    public class UsersContext : IdentityDbContext<IdentityUser>
+    public class UsersContext : IdentityDbContext<IdentityUser, IdentityRole, string>
     {
         private readonly string _connectionString;
         public UsersContext(DbContextOptions<UsersContext> options, IConfiguration configuration)

@@ -18,7 +18,6 @@ AddDbContext();
 AddAuthentication();
 AddIdentity();
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -34,6 +33,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+AddRoles();
+AddAdmin();
 
 app.Run();
 
@@ -125,5 +127,54 @@ void AddIdentity()
         options.Password.RequireUppercase = false;
         options.Password.RequireLowercase = false;
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<UsersContext>();
+}
+
+void AddRoles()
+{
+    using var scope = app.Services.CreateScope();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    
+    var tAdmin = CreateAdminRole(roleManager, configuration);
+    tAdmin.Wait();
+
+    var tUser = CreateUserRole(roleManager, configuration);
+    tUser.Wait();
+}
+
+async Task CreateAdminRole(RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+{
+    var adminRoleName = configuration.GetSection("AppSettings")["AdminRole"];
+    await roleManager.CreateAsync(new IdentityRole(adminRoleName));
+}
+
+async Task CreateUserRole(RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+{
+    var userRoleName = configuration.GetSection("AppSettings")["UserRole"];
+    await roleManager.CreateAsync(new IdentityRole(userRoleName));
+}
+
+void AddAdmin()
+{
+    var tAdmin = CreateAdminIfNotExists();
+    tAdmin.Wait();
+}
+
+async Task CreateAdminIfNotExists()
+{
+    using var scope = app.Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var adminInDb = await userManager.FindByEmailAsync("admin@admin.com");
+    if (adminInDb == null)
+    {
+        var admin = new IdentityUser { UserName = "admin", Email = "admin@admin.com" };
+        var adminCreated = await userManager.CreateAsync(admin, "admin123");
+
+        if (adminCreated.Succeeded)
+        {
+            await userManager.AddToRoleAsync(admin, "Admin");
+        }
+    }
 }

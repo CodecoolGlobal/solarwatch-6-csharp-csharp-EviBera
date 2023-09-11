@@ -10,10 +10,12 @@ namespace SolarWatch6.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authenticationService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authenticationService)
+        public AuthController(IAuthService authenticationService, IConfiguration configuration)
         {
             _authenticationService = authenticationService;
+            _configuration = configuration;
         }
 
         [HttpPost("Register")]
@@ -24,7 +26,8 @@ namespace SolarWatch6.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _authenticationService.RegisterAsync(request.Email, request.Username, request.Password);
+            var userRoleName = _configuration.GetSection("AppSettings")["UserRole"];
+            var result = await _authenticationService.RegisterAsync(request.Email, request.Username, request.Password, userRoleName);
 
             if (!result.Success)
             {
