@@ -8,5 +8,7 @@ namespace SolarWatch6.Services.Repository
         Task<SunsetSunriseData> AddSolarDataAsync(SunsetSunriseData data);
         Task<SunsetSunriseData> GetByDateAndCityAsync(DateOnly date, int cityId);
         Task<ICollection<SunsetSunriseData>> DeleteByCityIdAsync(int cityId);
+        Task<SunsetSunriseData> UpdateSolarDataByIdAsync(int solarDataId, SolarDataDTO newData);
+        Task<SunsetSunriseData> DeleteSolarDataByIdAsync(int solarDataId);
     }
 }

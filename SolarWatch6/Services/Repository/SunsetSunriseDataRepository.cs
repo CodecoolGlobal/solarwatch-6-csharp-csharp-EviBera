@@ -49,5 +49,38 @@ namespace SolarWatch6.Services.Repository
 
             return collectionOfDataToDelete;
         }
+
+        public async Task<SunsetSunriseData> UpdateSolarDataByIdAsync(int solarDataId, SolarDataDTO newData)
+        {
+            var solarDataToUpdate = await _dbContext.SunsetSunriseDataCollection.FirstOrDefaultAsync(ssd => ssd.Id == solarDataId);
+
+            if (solarDataToUpdate == null)
+            {
+                return null;
+            }
+
+            solarDataToUpdate.Date = newData.Date;
+            solarDataToUpdate.Sunset = newData.Sunset;
+            solarDataToUpdate.Sunrise = newData.Sunrise;
+            solarDataToUpdate.CityId = newData.CityId;
+
+            await _dbContext.SaveChangesAsync();
+
+            return solarDataToUpdate;
+        }
+
+        public async Task<SunsetSunriseData> DeleteSolarDataByIdAsync(int solarDataId)
+        {
+            var solarDataToDelete = await _dbContext.SunsetSunriseDataCollection.FirstOrDefaultAsync(ssd => ssd.Id == solarDataId);
+
+            if (solarDataToDelete == null)
+            {
+                return null;
+            }
+
+            _dbContext.SunsetSunriseDataCollection.Remove(solarDataToDelete);
+            await _dbContext.SaveChangesAsync();
+            return solarDataToDelete;
+        }
     }
 }
